@@ -8,9 +8,12 @@ import javax.swing.JTextField;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.Font;
 
-// Main class for the Calculator, extending JFrame to create the application window.
-
+/**
+ * Main class for the Calculator, extending JFrame to create the application window.
+ * This version supports floating-point arithmetic.
+ */
 public class Calculator extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -33,6 +36,7 @@ public class Calculator extends JFrame {
 	private JButton btnNewButton_08;
 	private JButton btnNewButton_09;
 	private JButton btnNewButton_00;
+	private JButton btnNewButton_point;
 
 	/**
 	 * Launch the application.
@@ -60,6 +64,7 @@ public class Calculator extends JFrame {
 	}
 	/**
 	 * Checks if the given object represents a single digit.
+	 * This method is designed to work with different types but only handles integers.
 	 * @param obj The object to check (can be String, Character, or Integer).
 	 * @return true if the object is a digit, false otherwise.
 	 */
@@ -92,7 +97,6 @@ public class Calculator extends JFrame {
         }
         return false;
 	}
-
 	/**
 	 * Checks if an ArrayList contains a specific item.
 	 * @param items The ArrayList of objects to search through.
@@ -107,81 +111,81 @@ public class Calculator extends JFrame {
         }
         return false;
     }
-
     /**
      * Parses the expression in the text field, calculates the result, and displays it.
-     * It follows the order of operations by first calculating division and multiplication,
-     * then addition and subtraction. This version works with Integers.
+     * It follows the order of operations by first calculating division, multiplication, and modulus,
+     * then addition and subtraction. This version works with floating-point numbers (Doubles).
      * @param textField The text field containing the mathematical expression.
      */
     public static void result(JTextField textField){
         
-        ArrayList<Object> items = new ArrayList<>(); // Holds numbers (Integer) and operators (Character)
-        ArrayList<String> numbers = new ArrayList<>(); // Temporarily holds digits of a number
+        ArrayList<Object> items = new ArrayList<Object>();
+        ArrayList<String> numbers = new ArrayList<String>();
         
-        // 1. Parse the input string into numbers and operators.
+        // 1. Parse the input string into numbers (Double) and operators (Character).
         for (char c : textField.getText().toCharArray()) {
-            if(isDigit(c)){
+            // Collect digits and decimal points to form a number.
+            if(isDigit(c)||c=='.'){
                 numbers.add(""+c);
             }
             else{
-                items.add(Integer.valueOf(String.join("",numbers)));
+            	items.add(Double.parseDouble(String.join("",numbers)));
                 items.add(c);
                 numbers = new ArrayList<String>();
             }       
         }
-        items.add(Integer.valueOf(String.join("",numbers)));
+        // Add the last number to the list.
+        items.add(Double.parseDouble(String.join("",numbers)));
 
-        // 2. Perform multiplication and division operations (higher precedence).
+        // 2. Perform multiplication, division, and modulus operations (higher precedence).
         int i = 0;
-        while (contains(items,'/')||contains(items, '*')){
-            // Find the first '*' or '/'
+        // The loop continues as long as there are high-precedence operators or we haven't scanned the whole list.
+        while (contains(items,'/')||contains(items, '*')||i<items.size()){
             if (items.get(i).equals('/')){
-                Integer n1 = (Integer)items.get(i-1);
-                Integer n2 = (Integer)items.get(i+1);
-                items.set(i-1, n1/n2);
+            	Double number1 = (Double)items.get(i-1);
+                Double number2 = (Double)items.get(i+1);
+                items.set(i-1, number1/number2);
                 items.remove(i);
                 items.remove(i);
                 continue;
             }
             if (items.get(i).equals('*')){
-                Integer n1 = (Integer)items.get(i-1);
-                Integer n2 = (Integer)items.get(i+1);
-                items.set(i-1, n1*n2);
+            	Double number1 = (Double)items.get(i-1);
+                Double number2 = (Double)items.get(i+1);
+                items.set(i-1, number1*number2);
                 items.remove(i);
                 items.remove(i);
                 continue;
             }
-            // If the end of the list is reached, reset the index to scan again.
-            if (i>=items.size()){
-                i = 0;
+            if (items.get(i).equals('%')){
+            	Double number1 = (Double)items.get(i-1);
+                Double number2 = (Double)items.get(i+1);
+                items.set(i-1, number1%number2);
+                items.remove(i);
+                items.remove(i);
                 continue;
             }
             i++; 
         }
+        
         // 3. Perform addition and subtraction operations (lower precedence).
         int j = 0;
-        while (contains(items,'+')||contains(items, '-')){
-            // Find the first '+' or '-'
+        // The loop continues as long as there are low-precedence operators or we haven't scanned the whole list.
+        while (contains(items,'+')||contains(items, '-')||j<items.size()){
             if (items.get(j).equals('+')){
-                Integer n1 = (Integer)items.get(j-1);
-                Integer n2 = (Integer)items.get(j+1);
-                items.set(j-1, n1+n2);
+            	Double number1 = (Double)items.get(j-1);
+                Double number2 = (Double)items.get(j+1);
+                items.set(j-1, number1+number2);
                 items.remove(j);
                 items.remove(j);
                 continue;
             }
             if (items.get(j).equals('-')){
-                Integer n1 = (Integer)items.get(j-1);
-                Integer n2 = (Integer)items.get(j+1);
-                items.set(j-1, n1-n2);
+            	Double number1 = (Double)items.get(j-1);
+                Double number2 = (Double)items.get(j+1);
+                items.set(j-1, number1-number2);
                 items.remove(j);
                 items.remove(j);
-                continue;
-            }
-            // If the end of the list is reached, reset the index to scan again.
-            if (j>=items.size()){
-                j = 0;
                 continue;
             }
             j++; 
@@ -189,7 +193,6 @@ public class Calculator extends JFrame {
         // 4. Display the final result.
         textField.setText(""+items.get(0));
     }
-
     /**
      * Clears the calculator screen.
      * @param textField The text field to clear.
@@ -202,9 +205,9 @@ public class Calculator extends JFrame {
      * @param textField The text field to modify.
      */
     public void remove(JTextField textField) {
+    	// This can be simplified using: textField.getText().substring(0, textField.getText().length() - 1)
     	String[] elements = new String[textField.getText().length()];
     	int trucker = 0;
-    	// This can be simplified using: textField.getText().substring(0, textField.getText().length() - 1)
     	for(char c : textField.getText().toCharArray()) {
     		elements[trucker] = ""+c;
     		trucker++;
@@ -222,7 +225,7 @@ public class Calculator extends JFrame {
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
-		contentPane.setLayout(null); // Using absolute positioning
+		contentPane.setLayout(null);
 		
 		// --- Display Screen Panel ---
 		JPanel panel = new JPanel();
@@ -232,7 +235,9 @@ public class Calculator extends JFrame {
 		
 		// --- Text Field for Display ---
 		textField_screen = new JTextField();
-		textField_screen.setBounds(89, 0, 218, 44);
+		textField_screen.setEditable(false);
+		textField_screen.setFont(new Font("Dialog", Font.BOLD, 14));
+		textField_screen.setBounds(0, 0, 245, 44);
 		textField_screen.setColumns(10);
 		panel.add(textField_screen);
 		
@@ -334,6 +339,15 @@ public class Calculator extends JFrame {
 		btnNewButton_00.setBounds(185, 135, 48, 48);
 		panel_1.add(btnNewButton_00);
 		
+		btnNewButton_point = new JButton(".");
+		btnNewButton_point.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				click(btnNewButton_point.getText());
+			}
+		});
+		btnNewButton_point.setBounds(185, 80, 48, 48);
+		panel_1.add(btnNewButton_point);
+		
 		// --- Operator and Control Button Panel ---
 		JPanel panel_2 = new JPanel();
 		panel_2.setBounds(270, 61, 168, 202);
@@ -381,8 +395,8 @@ public class Calculator extends JFrame {
 		
 		btnNewButton_4 = new JButton("%");
 		btnNewButton_4.addActionListener(new ActionListener() {
-			// This button's action listener is empty.
 			public void actionPerformed(ActionEvent e) {
+				click(btnNewButton_4.getText());
 			}
 		});
 		btnNewButton_4.setBounds(114, 23, 48, 48);
