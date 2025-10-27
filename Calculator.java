@@ -9,9 +9,11 @@ import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.Font;
+import javax.swing.SwingConstants;
+import java.awt.Color;
 
 /**
- * The main class for the Calculator application, extending JFrame to create the GUI.
+ * A simple calculator application with a graphical user interface built using Java Swing.
  */
 public class Calculator extends JFrame {
 
@@ -36,7 +38,6 @@ public class Calculator extends JFrame {
 	private JButton btnNewButton_00;
 	private JButton btnNewButton_point;
 	
-	// State variable to track whether a parenthesis has been opened and not yet closed.
 	private boolean parenthesesOpen = false;
 
 	/**
@@ -56,10 +57,9 @@ public class Calculator extends JFrame {
 	}
 	
 	/**
-     * Casts a Double to a Long if it represents a whole number, otherwise returns the Double.
-     * This is used for cleaner display of results (e.g., "5" instead of "5.0").
-     * @param number The number to cast.
-     * @return A Long if it's a whole number, otherwise the original Double.
+     * Casts a Double to a Long if it has no fractional part, otherwise returns the Double.
+     * @param number The Double to cast.
+     * @return A Long if the number is a whole number, otherwise the original Double.
      */
     private static Object cast(Double number) {
     	long longNumber = number.longValue();
@@ -71,11 +71,10 @@ public class Calculator extends JFrame {
     }
 
 	/**
-	 * Checks if an object is a single digit.
-	 * This method is quite complex for its purpose and handles String, Character, and Integer types.
-	 * @param obj The object to check.
-	 * @return true if the object represents a single digit, false otherwise.
-	 */
+     * Checks if an object represents a single digit.
+     * @param obj The object to check (can be String, Character, or Integer).
+     * @return true if the object is a digit, false otherwise.
+     */
 	private static boolean isDigit(Object obj){
         if (obj instanceof String){
             try{
@@ -107,11 +106,11 @@ public class Calculator extends JFrame {
     }
 
 	/**
-	 * Checks if an ArrayList contains a specific item.
-	 * @param items The ArrayList to search in.
-	 * @param item The item to search for.
-	 * @return true if the item is found, false otherwise.
-	 */
+     * Checks if an ArrayList contains a specific item.
+     * @param items The ArrayList to search through.
+     * @param item The item to search for.
+     * @return true if the item is found, false otherwise.
+     */
 	private static boolean contains(ArrayList<Object> items ,Object item){
         for (Object i : items){
             if (i.equals(item)){
@@ -122,12 +121,11 @@ public class Calculator extends JFrame {
     }
 
 	/**
-	 * Calculates the power of a number (a^b) using a simple loop.
-	 * Note: This implementation is intended for positive integer exponents.
-	 * @param a The base.
-	 * @param b The exponent.
-	 * @return The result of a raised to the power of b.
-	 */
+     * Calculates the exponent of a number (a^b) for positive integer exponents.
+     * @param a The base.
+     * @param b The exponent.
+     * @return The result of a raised to the power of b.
+     */
 	private static Double exponent(Double a, Double b) {
 		Double times = b;
 		Double exp = (double) 1;
@@ -139,129 +137,109 @@ public class Calculator extends JFrame {
 	}
 
 	/**
-	 * Performs calculations on a list of numbers and operators, respecting operator precedence.
-	 * The order of operations is: 1st pass for power (^), 2nd for multiplication/division (*, /),
-	 * and 3rd for addition/subtraction (+, -).
-	 * This method modifies the list in-place by replacing operations with their results.
-	 * @param items An ArrayList containing a mix of Double and Character (operator) objects.
-	 * @return The final result of the calculation as a Double.
-	 */
-	private static Double calculation(ArrayList<Object> items){
-		int i = 0; // Pass 1: Handle exponents (^)
-        while (contains(items,'^')||i<items.size()){
-            if (items.get(i).equals('^')){
+     * Performs a specific arithmetic operation (+, -, *, /, ^) on a list of numbers and operators.
+     * The list is modified in-place.
+     * @param items The list of numbers (Doubles) and operators (Characters).
+     * @param operator The character of the operation to perform.
+     * @return The modified list after performing all occurrences of the specified operation.
+     */
+	private static ArrayList<Object> operation(ArrayList<Object> items , char operator){
+		int i = 0;
+        while (contains(items,operator) && i<items.size()){
+            if (items.get(i).equals(operator)){
                 Double number1 = (Double)items.get(i-1);
                 Double number2 = (Double)items.get(i+1);
-                items.set(i-1, exponent(number1,number2));
+                switch(operator) {
+                case '^':
+                	items.set(i-1, exponent(number1,number2));
+                	break;
+                case '*':
+                	items.set(i-1, number1*number2);
+                	break;
+                case '/':
+                	items.set(i-1, number1/number2);
+                	break;
+                case '+':
+                	items.set(i-1, number1+number2);
+                	break;
+                case '-':
+                	items.set(i-1, number1-number2);
+                	break;
+                }
                 items.remove(i);
                 items.remove(i);
-                continue;
+                i = 0; // Reset index to re-scan from the beginning
+                continue; // Continue to the next iteration of the loop
             }
-            i++; 
+            i++;
         }
-        int j = 0; // Pass 2: Handle multiplication and division (*, /)
-        while (contains(items,'/')||contains(items, '*')||j<items.size()){
-            if (items.get(j).equals('/')){
-                Double number1 = (Double)items.get(j-1);
-                Double number2 = (Double)items.get(j+1);
-                items.set(j-1, number1/number2);
-                items.remove(j);
-                items.remove(j);
-                continue;
-            }
-            if (items.get(j).equals('*')){
-                Double number1 = (Double)items.get(j-1);
-                Double number2 = (Double)items.get(j+1);
-                items.set(j-1, number1*number2);
-                items.remove(j);
-                items.remove(j);
-                continue;
-            }
-            j++; 
-        }
-        int k = 0; // Pass 3: Handle addition and subtraction (+, -)
-        while (contains(items,'+')||contains(items, '-')||k<items.size()){
-            if (items.get(k).equals('+')){
-                Double number1 = (Double)items.get(k-1);
-                Double number2 = (Double)items.get(k+1);
-                items.set(k-1, number1+number2);
-                items.remove(k);
-                items.remove(k);
-                continue;
-            }
-            if (items.get(k).equals('-')){
-                Double number1 = (Double)items.get(k-1);
-                Double number2 = (Double)items.get(k+1);
-                items.set(k-1, number1-number2);
-                items.remove(k);
-                items.remove(k);
-                continue;
-            }
-            k++; 
-        }
+        return items;
+	}
+
+	/**
+     * Calculates the result of an expression stored in a list, respecting the order of operations.
+     * @param items The list of numbers and operators.
+     * @return The final result of the calculation as a Double.
+     */
+	private static Double calculation(ArrayList<Object> items){
+		operation(items,'^');
+		operation(items,'*');operation(items,'/');
+		operation(items,'+');operation(items,'-');
         return (Double)items.get(0);
     }
 
 	/**
-	 * Splits an expression string into a list of numbers (Doubles) and operators (Characters).
-	 * For example, "12.5+3" becomes [12.5, '+', 3.0].
-	 * @param string The mathematical expression as a String.
-	 * @return An ArrayList of objects representing the parsed expression.
-	 */
+     * Splits a mathematical expression string into a list of numbers (Doubles) and operators (Characters).
+     * @param string The input expression string.
+     * @return An ArrayList of Objects, containing Doubles for numbers and Characters for operators.
+     */
 	private static ArrayList<Object> split(String string){
         ArrayList<Object> items = new ArrayList<Object>();
-        ArrayList<String> numbers = new ArrayList<String>();
+        ArrayList<String> number = new ArrayList<String>();
         
         for (char c : string.toCharArray()) {
+			// If the character is a digit or a decimal point, append it to the current number
             if(isDigit(c) || c=='.'){
-                numbers.add(""+c);
+            	number.add(""+c);
             }
             else{
-                if (numbers.size()>0){
-                    items.add(Double.parseDouble(String.join("",numbers)));
+                if (number.size()>0){
+                    items.add(Double.parseDouble(String.join("",number)));
                 }
                 items.add(c);
-                numbers = new ArrayList<String>();
+                number = new ArrayList<String>();
             }       
         }
-        if (numbers.size()>0){
-            items.add(Double.parseDouble(String.join("",numbers)));
+        if (number.size()>0){
+            items.add(Double.parseDouble(String.join("",number)));
         }
         return items;
     }
 
 	/**
-	 * Finds and calculates expressions within parentheses.
-	 * It iteratively finds the first pair of parentheses, calculates the expression inside,
-	 * and replaces the parentheses and their content with the result.
-	 * Note: This does not handle nested parentheses correctly, e.g., (3*(4+5)).
-	 * @param items The list of parsed expression tokens (numbers and operators).
-	 * @return The list with all top-level parentheses-enclosed expressions resolved.
-	 */
-	private static ArrayList<Object> calculationInParentheses(ArrayList<Object> items){
+     * Finds and evaluates expressions within parentheses in the list.
+     * @param items The list of numbers and operators, which may include parentheses.
+     */
+	private static void calculationInParentheses(ArrayList<Object> items){
         while (contains(items,'(')&&contains(items,')')){
             ArrayList<Object> inParentheses = new ArrayList<Object>(items.subList(items.indexOf('(')+1,items.indexOf(')')));
             int size = inParentheses.size();
-            Double result = calculation(inParentheses);
             int start = items.indexOf('(');
             for (int j=0 ; j<=size; j++){
                 items.remove(start+1);
             }
-            items.set(start, result);
+            items.set(start, calculation(inParentheses));
         }
-        return items;
     }
 
 	/**
-	 * The main calculation trigger method. It takes the expression from the text field,
-	 * tokenizes it, solves parentheses, performs the final calculation, and displays
-	 * the formatted result or an error message.
-	 * @param textField The text field containing the expression to calculate.
-	 */
+     * Main calculation function. It takes the text from the screen, processes it, and displays the result or an error.
+     * @param textField The text field containing the expression to calculate.
+     */
 	private static void calculate(JTextField textField){
         try {
         	ArrayList<Object> items = split(textField.getText());
-            items = calculationInParentheses(items);
+            calculationInParentheses(items);
             calculation(items);
             textField.setText(""+cast((Double) items.get(0)));
         }
@@ -273,25 +251,23 @@ public class Calculator extends JFrame {
     }
 
 	/**
-	 * Appends a given string (from a button press) to the calculator's display.
-	 * @param choice The string to append (e.g., a digit or an operator).
-	 */
+     * Appends the given string (choice) to the text field.
+     * @param choice The string to append, usually from a button press.
+     */
 	private void click(String choice) {
 		String text = textField_screen.getText();
 		textField_screen.setText(text+choice);
 	}
 
-    /**
-     * Clears the calculator's display.
+	/**
+     * Clears the text field.
      * @param textField The text field to clear.
      */
 	private void clear(JTextField textField) {
     	textField.setText("");
     }
-
-    /**
-     * Removes the last character from the calculator's display (backspace functionality).
-     * This implementation is inefficient but functional.
+	/**
+     * Removes the last character from the text field.
      * @param textField The text field to modify.
      */
 	private void remove(JTextField textField) {
@@ -308,9 +284,8 @@ public class Calculator extends JFrame {
     }
 
 	/**
-     * Calculates the square root of the number in the display using the Babylonian method.
-     * The result replaces the current content of the text field.
-     * @param textField The text field containing the number to find the square root of.
+     * Calculates the square root of the number in the text field using the Babylonian method.
+     * @param textField The text field containing the number.
      */
 	private static void squirRoot(JTextField textField) {
     	try {
@@ -334,9 +309,8 @@ public class Calculator extends JFrame {
 	}
 
 	/**
-     * Toggles between inserting an opening or closing parenthesis.
-     * It uses the `parenthesesOpen` state variable to decide which character to return.
-     * @return "(" if no parenthesis is open, ")" if one is already open.
+     * Toggles between inserting an opening and a closing parenthesis.
+     * @return A "(" if no parenthesis is open, or a ")" if one is.
      */
 	private String parantheses() {
     	if(!parenthesesOpen) {
@@ -350,30 +324,32 @@ public class Calculator extends JFrame {
     }
 
 	/**
-	 * Constructor for the Calculator. Initializes the GUI components and sets up the frame.
+	 * Create the frame.
 	 */
 	public Calculator() {
+		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 400, 350);
+		setBounds(100, 100, 453, 350);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
 		JPanel panel = new JPanel();
-		panel.setBounds(22, 0, 352, 44);
+		panel.setBounds(22, 12, 407, 54);
 		contentPane.add(panel);
 		panel.setLayout(null);
 		
 		textField_screen = new JTextField();
+		textField_screen.setForeground(new Color(0, 51, 204));
 		textField_screen.setEditable(false);
-		textField_screen.setFont(new Font("Dialog", Font.BOLD, 14));
-		textField_screen.setBounds(66, -1, 218, 44);
+		textField_screen.setFont(new Font("Dialog", Font.BOLD, 20));
+		textField_screen.setBounds(38, 12, 328, 30);
 		textField_screen.setColumns(10);
 		panel.add(textField_screen);
 		
 		JPanel panel_1 = new JPanel();
-		panel_1.setBounds(22, 49, 353, 264);
+		panel_1.setBounds(22, 71, 408, 242);
 		contentPane.add(panel_1);
 		panel_1.setLayout(null);
 		
@@ -464,16 +440,17 @@ public class Calculator extends JFrame {
 				click(btnNewButton_00.getText());
 			}
 		});
-		btnNewButton_00.setBounds(65, 188, 48, 48);
+		btnNewButton_00.setBounds(12, 188, 48, 48);
 		panel_1.add(btnNewButton_00);
 		
 		btnNewButton_point = new JButton(".");
+		btnNewButton_point.setFont(new Font("Dialog", Font.BOLD, 18));
 		btnNewButton_point.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				click(btnNewButton_point.getText());
 			}
 		});
-		btnNewButton_point.setBounds(119, 188, 48, 48);
+		btnNewButton_point.setBounds(239, 134, 48, 48);
 		panel_1.add(btnNewButton_point);		
 		
 		JButton btnNewButton_delete = new JButton("D");
@@ -482,64 +459,71 @@ public class Calculator extends JFrame {
 				remove(textField_screen);
 			}
 		});
-		btnNewButton_delete.setBounds(293, 133, 48, 48);
+		btnNewButton_delete.setBounds(186, 133, 48, 48);
 		panel_1.add(btnNewButton_delete);
 		
-		btnNewButton_clear = new JButton("C");
+		btnNewButton_clear = new JButton("clear");
+		btnNewButton_clear.setFont(new Font("Dialog", Font.BOLD, 14));
 		btnNewButton_clear.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				clear(textField_screen);
 			}
 		});
-		btnNewButton_clear.setBounds(239, 188, 48, 48);
+		btnNewButton_clear.setBounds(186, 188, 100, 48);
 		panel_1.add(btnNewButton_clear);
 		
 		btnNewButton_multiply = new JButton("*");
+		btnNewButton_multiply.setFont(new Font("Dialog", Font.BOLD, 14));
 		btnNewButton_multiply.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				click(btnNewButton_multiply.getText());
 			}
 		});
-		btnNewButton_multiply.setBounds(186, 79, 48, 48);
+		btnNewButton_multiply.setBounds(239, 79, 48, 48);
 		panel_1.add(btnNewButton_multiply);
 		
 		btnNewButton_divide = new JButton("/");
+		btnNewButton_divide.setFont(new Font("Dialog", Font.BOLD, 18));
 		btnNewButton_divide.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				click(btnNewButton_divide.getText());
 			}
 		});
-		btnNewButton_divide.setBounds(239, 79, 48, 48);
+		btnNewButton_divide.setBounds(186, 79, 48, 48);
 		panel_1.add(btnNewButton_divide);
 		
 		btnNewButton_add = new JButton("+");
+		btnNewButton_add.setFont(new Font("Dialog", Font.BOLD, 16));
 		btnNewButton_add.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				click(btnNewButton_add.getText());
 			}
 		});
-		btnNewButton_add.setBounds(239, 133, 48, 48);
+		btnNewButton_add.setBounds(293, 79, 48, 48);
 		panel_1.add(btnNewButton_add);
 		
 		btnNewButton_subtract = new JButton("-");
+		btnNewButton_subtract.setFont(new Font("Dialog", Font.BOLD, 22));
 		btnNewButton_subtract.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				click(btnNewButton_subtract.getText());
 			}
 		});
-		btnNewButton_subtract.setBounds(293, 79, 48, 48);
+		btnNewButton_subtract.setBounds(347, 79, 48, 48);
 		panel_1.add(btnNewButton_subtract);
 		
 		btnNewButton_equals = new JButton("=");
+		btnNewButton_equals.setFont(new Font("Dialog", Font.BOLD, 16));
 		btnNewButton_equals.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				calculate(textField_screen);
 			}
 		});
-		btnNewButton_equals.setBounds(186, 133, 48, 48);
+		btnNewButton_equals.setBounds(293, 134, 102, 102);
 		panel_1.add(btnNewButton_equals);
 		
-		JButton btnNewButton_paranthes = new JButton("(  )");
+		JButton btnNewButton_paranthes = new JButton("( )");
+		btnNewButton_paranthes.setFont(new Font("Dialog", Font.BOLD, 14));
 		btnNewButton_paranthes.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				click(parantheses());
@@ -554,19 +538,39 @@ public class Calculator extends JFrame {
 				click(btnNewButton_exp.getText());
 			}
 		});
-		btnNewButton_exp.setFont(new Font("Dialog", Font.BOLD, 12));
-		btnNewButton_exp.setBounds(293, 25, 48, 48);
+		btnNewButton_exp.setFont(new Font("Dialog", Font.BOLD, 16));
+		btnNewButton_exp.setBounds(347, 25, 48, 48);
 		panel_1.add(btnNewButton_exp);
 		
-		JButton btnNewButton_sqr = new JButton("sqr");
+		JButton btnNewButton_sqr = new JButton("sqrt");
 		btnNewButton_sqr.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				squirRoot(textField_screen);
 			}
 		});
-		btnNewButton_sqr.setFont(new Font("Dialog", Font.BOLD, 9));
-		btnNewButton_sqr.setBounds(239, 25, 48, 48);
+		btnNewButton_sqr.setFont(new Font("Dialog", Font.BOLD, 13));
+		btnNewButton_sqr.setBounds(239, 25, 102, 48);
 		panel_1.add(btnNewButton_sqr);
+		
+		JButton btnNewButton_py = new JButton("py");
+		btnNewButton_py.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				click(""+(double)22/7);
+			}
+		});
+		btnNewButton_py.setFont(new Font("Dialog", Font.BOLD, 11));
+		btnNewButton_py.setBounds(119, 188, 48, 48);
+		panel_1.add(btnNewButton_py);
+		
+		JButton btnNewButton_eulir = new JButton("e");
+		btnNewButton_eulir.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				click(""+(double)19/7);
+			}
+		});
+		btnNewButton_eulir.setFont(new Font("Dialog", Font.BOLD, 13));
+		btnNewButton_eulir.setBounds(65, 188, 48, 48);
+		panel_1.add(btnNewButton_eulir);
 		
 
 	}
